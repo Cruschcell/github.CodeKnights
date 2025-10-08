@@ -1,10 +1,42 @@
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, StatusBar, TextInput, Modal, ScrollView, Animated } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, StatusBar, TextInput, Modal, ScrollView, Animated, Alert } from 'react-native'
 import React, { useState, useRef, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get("window");
 
-export default function Homepage() {
+export default function Homepage({navigation}) {
+  // useEffect(()=>{
+  //   const clearStorage = async () =>{
+  //     try{
+  //       await AsyncStorage.clear();
+  //       console.log('Async cleared')
+  //     } catch(e){
+  //       console.log('Async not cleared')
+  //     }
+  //   };
+  //   clearStorage();
+  // },[]);
+
+  const handleLogout = async () => {
+    Alert.alert('Logout', 'Are you sure you wanna logout?',[{
+      text:'Nah',style:'cancel'
+    },
+    {
+      text:'Logout', onPress: async()=>{
+        try{
+          await AsyncStorage.removeItem('currentUser');
+          navigation.replace('WelcomePage');
+        }catch(e){
+          console.log('logout error',e);
+          Alert.alert('Error','Failed to logout');
+        }
+      }
+    }
+  ]);
+  };
+
+  const[user,setUser]=useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [boardsExpanded, setBoardsExpanded] = useState(false);
@@ -15,7 +47,7 @@ export default function Homepage() {
     if (menuVisible) {
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 300,
+        duration: 200,
         useNativeDriver: true,
       }).start();
     }
@@ -24,7 +56,7 @@ export default function Homepage() {
   const closeMenu = () => {
     Animated.timing(slideAnim, {
       toValue: -width * 0.75,
-      duration: 300,
+      duration: 200,
       useNativeDriver: true,
     }).start(() => {
       setMenuVisible(false);
@@ -43,6 +75,21 @@ export default function Homepage() {
   const handleSearch = () => {
     console.log('Search:', searchQuery);
   };
+  const getCurrentUser = async()=>{
+    try{
+      const currentUserJson=await AsyncStorage.getItem('currentUser');
+      if(currentUserJson){
+        const user = JSON.parse(currentUserJson);
+        console.log('Current user : ', user.username,user.role);
+        setUser(user)
+      }
+    }catch(e){
+      console.log("Error getting current user",e);
+    }
+  };
+  useEffect(()=>{
+      getCurrentUser()
+    },[]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -63,7 +110,8 @@ export default function Homepage() {
         </View>
       </View>
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.welcomeText}>Welcome to Letran CodeKnights <Text style={styles.usernameText}>John Doe</Text>
+        <Text style={styles.welcomeText}>
+          Welcome to Letran CodeKnights {user && <Text style={styles.usernameText}>{user.username}</Text>}
         </Text>
         <View style={styles.boardsGrid}>
           {boards.map((board, index) => {
@@ -85,16 +133,16 @@ export default function Homepage() {
         </View>
 
         <View style={styles.guidelinesSection}>
-          <TouchableOpacity style={styles.guidelinesCard} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.guidelinesCard} activeOpacity={0.8} onPress={()=>navigation.navigate('Rule')}>
             <Text style={styles.guidelinesCode}>/Janni/</Text>
             <Text style={styles.guidelinesTitle}>Rules and Regulations</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.footer}>© 2025 Letran Manila. All rights reserved</Text>
+        <Text style={styles.footer}>© 2025 Drain gang. All rights reserved</Text>
       </ScrollView>
 
-      <Modal visible={menuVisible} transparent={true} animationType="fade" onRequestClose={() => setMenuVisible(false)}>
+      <Modal visible={menuVisible} transparent={true} animationType="none" onRequestClose={() => setMenuVisible(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={closeMenu}>
           <Animated.View style={[
               styles.menuContainer,
@@ -111,7 +159,7 @@ export default function Homepage() {
               <TouchableOpacity style={styles.menuItem}>
                 <Text style={styles.menuItemText}>Home</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.menuItem}>
+              <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Profile')}>
                 <Text style={styles.menuItemText}>Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem} onPress={() => setBoardsExpanded(!boardsExpanded)}>
@@ -129,8 +177,11 @@ export default function Homepage() {
                   ))}
                 </View>
               )}
-              <TouchableOpacity style={styles.menuItem}>
+              <TouchableOpacity style={styles.menuItem} onPress={()=>navigation.navigate("Rule")}>
                 <Text style={styles.menuItemText}>Guidelines</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+                <Text style={styles.menuItemText}>Logout</Text>
               </TouchableOpacity>
             </ScrollView>
           </Animated.View>

@@ -1,17 +1,54 @@
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, StatusBar, TextInput } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, StatusBar, TextInput, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Ellipse } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const { width } = Dimensions.get("window");
 
-export default function Login() {
+export default function Login({navigation}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    console.log('Login pressed');
-  };
+  const handleLogin = async () => {
+    if(!username.trim() || !password){
+      Alert.alert('Please enter both username/email and password!');
+      return;
+    }
+    try{
+      const usersJson = await AsyncStorage.getItem('users');
+      const users = usersJson ? JSON.parse(usersJson):[];
+      const inputValue = username.trim().toLowerCase();
+
+      const user = users.find(u=>{
+        const matchUsername = u.username.toLowerCase()===inputValue;
+        const matchEmail = u.email.toLowerCase()===inputValue;
+        const matchPassword = u.password === password;
+
+        return (matchUsername || matchEmail) && matchPassword;
+      });
+      if(user){
+        const loginData = {
+          isLoggedIn: true,
+          userId: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          loginTime: new Date().toISOString()
+        };
+        await AsyncStorage.setItem('currentUser',JSON.stringify(loginData));
+        Alert.alert('Login Successful', `Welcome back , ${user.username}`,[
+          {text: 'ok', onPress:()=>navigation.replace('HomePage')}
+        ]);
+       }else{
+          Alert.alert('Login Fialed', 'Invalid Username/email or password');
+        }
+      }catch(e){
+        console.log('Login error', e)
+        Alert.alert('Error','Failed to login, try again')
+      }
+    }
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,7 +94,7 @@ export default function Login() {
       </View>
     </SafeAreaView>
   )
-}
+};
 
 const styles = StyleSheet.create({
   container: {
