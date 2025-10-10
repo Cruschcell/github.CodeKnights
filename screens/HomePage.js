@@ -1,23 +1,11 @@
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, StatusBar, TextInput, Modal, ScrollView, Animated, Alert } from 'react-native'
+import { Text, View, TouchableOpacity, Dimensions, StatusBar, TextInput, Modal, ScrollView, Animated, Alert } from 'react-native'
 import React, { useState, useRef, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const { width } = Dimensions.get("window");
+import styles from '../styles/HomepageStyle'
+const { width } = Dimensions.get('window');
 
 export default function Homepage({navigation}) {
-  // useEffect(()=>{
-  //   const clearStorage = async () =>{
-  //     try{
-  //       await AsyncStorage.clear();
-  //       console.log('Async cleared')
-  //     } catch(e){
-  //       console.log('Async not cleared')
-  //     }
-  //   };
-  //   clearStorage();
-  // },[]);
-
   const handleLogout = async () => {
     Alert.alert('Logout', 'Are you sure you wanna logout?',[{
       text:'Nah',style:'cancel'
@@ -35,6 +23,17 @@ export default function Homepage({navigation}) {
     }
   ]);
   };
+  // useEffect(()=>{
+  //   const clearStorage = async () =>{
+  //     try{
+  //       await AsyncStorage.clear();
+  //       console.log('Async cleared')
+  //     } catch(e){
+  //       console.log('Async not cleared')
+  //     }
+  //   };
+  //   clearStorage();
+  // },[]);
 
   const[user,setUser]=useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,23 +72,47 @@ export default function Homepage({navigation}) {
   ];
 
   const handleSearch = () => {
-    console.log('Search:', searchQuery);
+    if (searchQuery.trim()) {
+      navigation.navigate('SearchResult', { 
+        query: searchQuery.trim(),
+        boards: boards 
+      });
+    }
   };
+
   const getCurrentUser = async()=>{
     try{
       const currentUserJson=await AsyncStorage.getItem('currentUser');
       if(currentUserJson){
         const user = JSON.parse(currentUserJson);
         console.log('Current user : ', user.username,user.role);
-        setUser(user)
+        setUser(user);
       }
     }catch(e){
       console.log("Error getting current user",e);
     }
   };
+
   useEffect(()=>{
       getCurrentUser()
     },[]);
+  
+  const navigateToBoard = (board)=>{
+    navigation.navigate('Board',{
+      boardId:board.id,
+      boardCode:board.code,
+      boardTitle:board.title
+    });
+  };
+
+  const navigateToBoardFromMenu = (board)=>{
+    closeMenu();
+    navigation.navigate('Board',{
+      boardId:board.id,
+      boardCode:board.code,
+      boardTitle:board.title
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -102,8 +125,15 @@ export default function Homepage({navigation}) {
         </TouchableOpacity>
 
         <View style={styles.searchContainer}>
-          <TextInput style={styles.searchInput} placeholder="Search catalog" value={searchQuery} 
-          onChangeText={setSearchQuery} placeholderTextColor="#666" onSubmitEditing={handleSearch}/>
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Search catalog" 
+            value={searchQuery} 
+            onChangeText={setSearchQuery} 
+            placeholderTextColor="#666" 
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
           <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
             <Text style={styles.searchIcon}>🔍</Text>
           </TouchableOpacity>
@@ -117,14 +147,14 @@ export default function Homepage({navigation}) {
           {boards.map((board, index) => {
             if (index === 4) {
               return (
-                <TouchableOpacity key={board.id} style={[styles.boardCard, styles.boardCardFull]} activeOpacity={0.8}>
+                <TouchableOpacity key={board.id} style={[styles.boardCard, styles.boardCardFull]} activeOpacity={0.8} onPress={()=>navigateToBoard(board)}>
                   <Text style={styles.boardCode}>{board.code}</Text>
                   <Text style={styles.boardTitle}>{board.title}</Text>
                 </TouchableOpacity>
               );
             }
             return (
-              <TouchableOpacity key={board.id} style={styles.boardCard} activeOpacity={0.8}>
+              <TouchableOpacity key={board.id} style={styles.boardCard} activeOpacity={0.8} onPress={()=>navigateToBoard(board)}>
                 <Text style={styles.boardCode}>{board.code}</Text>
                 <Text style={styles.boardTitle}>{board.title}</Text>
               </TouchableOpacity>
@@ -169,7 +199,7 @@ export default function Homepage({navigation}) {
               {boardsExpanded && (
                 <View style={styles.dropdownContent}>
                   {boards.map((board) => (
-                    <TouchableOpacity key={board.id} style={styles.dropdownItem}>
+                    <TouchableOpacity key={board.id} style={styles.dropdownItem} onPress={()=>navigateToBoardFromMenu(board)}>
                       <Text style={styles.dropdownItemText}>
                         {board.code} - {board.title}
                       </Text>
@@ -190,199 +220,3 @@ export default function Homepage({navigation}) {
     </SafeAreaView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#00205B",
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    backgroundColor: "#00205B",
-  },
-  hamburgerButton: {
-    padding: 10,
-    marginRight: 10,
-  },
-  hamburgerBun: {
-    width: 30,
-    height: 3,
-    backgroundColor: '#fff',
-    marginVertical: 3,
-    borderRadius: 2,
-  },
-  hamburgerPatty: {
-    width: 30,
-    height: 3,
-    backgroundColor: '#fff',
-    marginVertical: 3,
-    borderRadius: 2,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    height: 45,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#000',
-  },
-  searchButton: {
-    padding: 5,
-  },
-  searchIcon: {
-    fontSize: 18,
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingTop: 40,
-    paddingBottom: 30,
-  },
-  welcomeText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 50,
-  },
-  usernameText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 50,
-  },
-  boardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    gap: 20,
-  },
-  boardCard: {
-    width: (width - 60) / 2,
-    backgroundColor: '#003380',
-    borderRadius: 10,
-    padding: 20,
-    minHeight: 140,
-    justifyContent: 'center',
-  },
-  boardCardFull: {
-    width: width - 40,
-  },
-  boardCode: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  boardTitle: {
-    fontSize: 13,
-    color: '#fff',
-    lineHeight: 18,
-  },
-  guidelinesSection: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  guidelinesCard: {
-    backgroundColor: '#003380',
-    borderRadius: 10,
-    padding: 20,
-    minHeight: 100,
-    justifyContent: 'center',
-  },
-  guidelinesCode: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  guidelinesTitle: {
-    fontSize: 14,
-    color: '#fff',
-    lineHeight: 18,
-  },
-  footer: {
-    fontSize: 12,
-    color: '#fff',
-    textAlign: 'center',
-    marginTop: 40,
-    opacity: 0.8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    flexDirection: 'row',
-  },
-  menuContainer: {
-    backgroundColor: '#fff',
-    width: width * 0.75,
-    height: '100%',
-  },
-  menuHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  menuTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#00205B',
-  },
-  closeButton: {
-    padding: 5,
-  },
-  closeButtonText: {
-    fontSize: 28,
-    color: '#00205B',
-    fontWeight: '300',
-  },
-  menuContent: {
-    padding: 10,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  menuItemText: {
-    fontSize: 18,
-    color: '#00205B',
-    fontWeight: '500',
-  },
-  dropdownIcon: {
-    fontSize: 14,
-    color: '#00205B',
-  },
-  dropdownContent: {
-    backgroundColor: '#f5f5f5',
-    paddingLeft: 20,
-  },
-  dropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  dropdownItemText: {
-    fontSize: 14,
-    color: '#00205B',
-  },
-});

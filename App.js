@@ -10,6 +10,11 @@ import Registration from "./screens/Registration";
 import Thread from "./screens/Thread";
 import Rule from "./screens/Rule";
 import WelcomePage from "./screens/WelcomePage";
+import AddThread from "./screens/AddThread";
+import SearchResult from "./screens/SearchResult"
+// import AdminThread from "./screens/AdminThread";
+// import AdminPanel from "./screens/AdminPanel";
+// import AdminBoard from "./screens/AdminBoard";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ActivityIndicator,View} from 'react-native';
@@ -30,8 +35,12 @@ export default function App(){
         const currentUser = JSON.parse(currentUserJson);
         setIsLoggedIn(currentUser.isLoggedIn===true);
       }
+      else{
+        setIsLoggedIn(false);
+      }
     }catch(e){
       console.log('Error checking login status',e);
+      setIsLoggedIn(false);
     }finally{
       setIsLoading(false);
     }
@@ -56,6 +65,11 @@ export default function App(){
           <Stack.Screen name="Thread" component={Thread} options={{headerShown:false}}/>
           <Stack.Screen name="WelcomePage" component={WelcomePage} options={{headerShown:false}}/>
           <Stack.Screen name="Rule" component={Rule} options ={{headerShown:false}}/>
+          <Stack.Screen name="AddThread" component={AddThread} options={{headerShown:false}}/>
+          <Stack.Screen name="SearchResult" component={SearchResult} options={{headerShown:false}}/>
+          {/* <Stack.Screen name="AdminThread" component={AdminThread} options={{headerShown:false}}/>
+          <Stack.Screen name="AdminPanel" component={AdminPanel} options={{headerShown:false}}/>
+          <Stack.Screen name="AdminBoard" component={AdminBoard} options={{headerShown:false}}/> */}
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
